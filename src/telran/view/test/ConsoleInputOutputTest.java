@@ -1,7 +1,5 @@
 package telran.view.test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,7 +16,7 @@ ConsoleInputOutput io = new ConsoleInputOutput();
 	}
 
 	@Test
-	
+
 	void testReadObject() {
 		int[] numbers = io.readObject("Enter two integer numbers separated by #",
 				"Must be two numbers", str -> {
