@@ -1,6 +1,7 @@
 package telran.employees;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
@@ -13,7 +14,7 @@ import telran.net.ApplProtocol;
 import telran.net.Request;
 import telran.net.Response;
 import telran.net.ResponseCode;
-
+@SuppressWarnings("unused")
 public class CompanyProtocol implements ApplProtocol {
 
 	private Company company;
@@ -28,25 +29,30 @@ public class CompanyProtocol implements ApplProtocol {
 		String requestType = request.requestType();
 		Serializable data = request.requestData();
 		
-		CompanyProtocol companyProtocol = this;
-		Class<? extends CompanyProtocol> clazz = companyProtocol.getClass();
-		String methodName = requestType.replace("/", "_");		
-		
 		try {
-			Method method = clazz.getDeclaredMethod(methodName, Serializable.class);
-			Serializable responseData = (Serializable) method.invoke(this, data);
-
-			response = (responseData instanceof Response) ? 
-					(Response) responseData :
-				new Response(ResponseCode.OK, responseData);
+			requestType = requestType.replace('/', '_');
+			Method method = this.getClass().getDeclaredMethod(requestType, Serializable.class);
+			Serializable responseData = (Serializable) method.invoke(this, data);			
+			response = new Response(ResponseCode.OK, responseData);
+		} catch(NoSuchMethodException e) {
+			response = new Response(ResponseCode.WRONG_TYPE, requestType +
+		    		" is unsupported in the Company Protocol");
+		}
+		
+		catch (InvocationTargetException e) {
+			Throwable ce = e.getCause();
+			String errorMessage = ce instanceof ClassCastException ?
+					"Mismatching of received data type" : ce.getMessage();
 			
+			response = new Response(ResponseCode.WRONG_DATA, errorMessage);
 		} catch (Exception e) {
 			response = new Response(ResponseCode.WRONG_DATA, e.toString());
-		}
+		} 
 		return response;
 	}
 
-	 private Serializable salary_update(Serializable data) {
+	
+	private Serializable salary_update(Serializable data) {
 		 @SuppressWarnings("unchecked")
 			UpdateData<Integer> updateData = (UpdateData<Integer>) data;
 			long id = updateData.id();
